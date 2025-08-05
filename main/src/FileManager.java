@@ -45,40 +45,43 @@ public class FileManager {
         }
 
         try (Scanner scanner = new Scanner(file)) {
-            StringBuilder content = new StringBuilder();
-            while (scanner.hasNextLine()) {
-                content.append(scanner.nextLine());
-            }
+            String content = scanner.useDelimiter("\\Z").next().trim();
 
-            String jsonString = content.toString().trim();
-            if (jsonString.isEmpty() || jsonString.equals("[]")) {
+            if (content.isEmpty() || content.equals("[]")) {
                 return tasks;
             }
 
-            jsonString = jsonString.substring(1, jsonString.length() - 1);
-            String[] jsonObjects = jsonString.split("\\},\\s*\\{");
+            content = content.substring(1, content.length() - 1).trim();
+            String[] jsonObjects = content.split("(?<=\\})\\s*,\\s*(?=\\{)");
 
-            for (String obj : jsonObjects) {
-                if (!obj.startsWith("{")) obj = "{" + obj;
-                if (!obj.endsWith("}")) obj = obj + "}";
+            for (String jsonObj : jsonObjects) {
+                try {
+                    if (!jsonObj.startsWith("{")) jsonObj = "{" + jsonObj;
+                    if (!jsonObj.endsWith("}")) jsonObj = jsonObj + "}";
 
-                Map<String, String> taskMap = parseJsonObject(obj);
+                    Map<String, String> taskMap = parseJsonObject(jsonObj);
 
-                TaskProperties task = new TaskProperties(
-                        taskMap.getOrDefault("id", UUID.randomUUID().toString()), // Garante ID
-                        taskMap.get("description"),
-                        taskMap.get("status"),
-                        LocalDate.parse(taskMap.get("createdAt")),
-                        LocalDate.parse(taskMap.get("updatedAt"))
-                );
+                    String id = taskMap.get("id");
+                    if (id == null) {
+                        System.err.println("Warning: Found task with null ID, skipping");
+                        continue;
+                    }
 
-                tasks.add(task);
+                    TaskProperties task = new TaskProperties(
+                            id,
+                            taskMap.get("description"),
+                            taskMap.get("status"),
+                            LocalDate.parse(taskMap.get("createdAt")),
+                            LocalDate.parse(taskMap.get("updatedAt"))
+                    );
 
-                tasks.add(task);
+                    tasks.add(task);
+                } catch (Exception e) {
+                    System.err.println("Error parsing task: " + e.getMessage());
+                }
             }
-
         } catch (Exception e) {
-            System.err.println("Error while reading file: " + e.getMessage());
+            System.err.println("Error reading file: " + e.getMessage());
         }
 
         return tasks;
@@ -86,20 +89,28 @@ public class FileManager {
 
     private static Map<String, String> parseJsonObject(String jsonObject) {
         Map<String, String> map = new HashMap<>();
-        jsonObject = jsonObject.substring(1, jsonObject.length() - 1);
 
-        String[] pairs = jsonObject.split(",");
-        for (String pair : pairs) {
-            String[] keyValue = pair.split(":", 2);
-            String key = keyValue[0].trim().replace("\"", "");
-            String value = keyValue[1].trim();
+        try {
+            jsonObject = jsonObject.substring(1, jsonObject.length() - 1).trim();
+            String[] pairs = jsonObject.split("\\s*,\\s*");
 
-            if(value.startsWith("\"") && value.endsWith("\"")) {
-                value = value.substring(1, value.length() - 1);
-                value = unescapeJson(value);
+            for (String pair : pairs) {
+                String[] keyValue = pair.split("\\s*:\\s*", 2);
+                if (keyValue.length == 2) {
+                    String key = keyValue[0].replace("\"", "").trim();
+                    String value = keyValue[1].trim();
+
+                    if (value.startsWith("\"") && value.endsWith("\"")) {
+                        value = value.substring(1, value.length() - 1);
+                    }
+
+                    map.put(key, value);
+                }
             }
-            map.put(key, value);
+        } catch (Exception e) {
+            System.err.println("Error parsing JSON object: " + e.getMessage());
         }
+
         return map;
     }
 

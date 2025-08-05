@@ -19,11 +19,6 @@ public class TaskManager {
             return;
         }
 
-        if (tasks.stream().anyMatch(t -> t.getDescription().equalsIgnoreCase(description.trim()))) {
-            System.out.println("Task already exists");
-            return;
-        }
-
         String id = UUID.randomUUID().toString();
         TaskProperties task = new TaskProperties(id, description, "todo", today, today);
         tasks.add(task);
@@ -31,31 +26,28 @@ public class TaskManager {
         System.out.println("Task add successfully");
     }
 
-    public void updateTask(String id, String description) {
+    public void updateTask(String id, String newDescription) {
         if (id == null || id.trim().isEmpty()) {
-            System.out.println("Error: Task ID cannot be empty!");
+            System.err.println("Error: ID cannot be empty");
             return;
         }
 
-        if (description == null || description.trim().isEmpty()) {
-            System.out.println("Error: Description cannot be empty!");
-            return;
-        }
+        String cleanId = id.trim();
 
-        String cleanId = id.trim().replace("\"", "");
-        System.out.println("Debug: Searching for ID -> " + cleanId); // Log de depuração
+        TaskProperties taskToUpdate = tasks.stream()
+                .filter(task -> task != null)
+                .filter(task -> cleanId.equals(task.getId())) // Comparação exata
+                .findFirst()
+                .orElse(null);
 
-        TaskProperties task = findTaskById(cleanId);
-
-        if (task != null) {
-            System.out.println("Debug: Found task -> " + task); // Log de depuração
-            task.setDescription(description.trim());
-            task.setUpdatedAt(LocalDate.now());
+        if (taskToUpdate != null) {
+            taskToUpdate.setDescription(newDescription.trim());
+            taskToUpdate.setUpdatedAt(LocalDate.now());
             FileManager.saveTasks(tasks);
             System.out.println("Task updated successfully!");
         } else {
-            System.out.println("Error: Task with ID '" + cleanId + "' not found. Available IDs:");
-            tasks.forEach(t -> System.out.println("- " + t.getId()));
+            System.err.println("Error: Task not found. Current tasks:");
+            tasks.forEach(t -> System.out.println("- ID: " + t.getId() + " | Desc: " + t.getDescription()));
         }
     }
 
@@ -107,7 +99,6 @@ public class TaskManager {
             return null;
         }
 
-        // Limpa o ID (remove aspas se houver)
         String cleanId = id.trim().replace("\"", "");
 
         return tasks.stream()
