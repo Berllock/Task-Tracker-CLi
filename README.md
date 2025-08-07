@@ -97,5 +97,6 @@ Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
 
 ## ✉️ Contato
 
-Breno Souza - [Breno](www.linkedin.com/in/breno-berllock) - brenosouzaemp@gmail.com
+Breno Souza - [Linkedin]([www.linkedin.com/in/breno-berllock](https://www.linkedin.com/in/breno-berllock/)) - brenosouzaemp@gmail.com
+
 Link do Projeto: [https://github.com/Berllock/Task-Tracker-CLi.git](https://github.com/Berllock/Task-Tracker-CLi.git)
