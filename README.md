@@ -90,6 +90,14 @@ task-tracker-cli/
   }
 ]
 ```
+🗺️ Roadmap Original
+Este projeto foi baseado no desafio [Task Tracker do roadmap.sh](https://roadmap.sh/projects/task-tracker), que propõe:
+
+Implementar um CLI para gerenciamento de tarefas
+
+Usar JSON para armazenamento
+
+Evitar bibliotecas externas
 
 ## 📄 Licença
 
